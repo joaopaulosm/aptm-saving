@@ -17,7 +17,7 @@ if (_DEBUG == True):
 	addr = os.getcwd() + '/'
 	#addr = '/media/sf_vboxshared/'
 else:
-	addr = '/mnt/external/aptm_datacollection'
+	addr = '/mnt/external/aptm_datacollection/'
 
 # Timestamping configs
 TIMESTAMP = time.strftime("%H:%M:%S")
@@ -66,10 +66,6 @@ def main():
 
 	# Trigger counter
 	trgCounter = 0
-
-	# PV used as a trigger for data collection
-	acq_trigger = epics.PV(pvTriggerName)
-	acq_trigger.add_callback(onChanges)
 
 	# ESS APTM PVs creation ######################################################################################
 	ess_pv_list = []
@@ -151,10 +147,17 @@ def main():
 		epics.ca.connect_channel(data[0])
 	epics.ca.poll()
 
+	# PV used as a trigger for data collection
+	acq_trigger = epics.PV(pvTriggerName)
+	acq_trigger.add_callback(onChanges)
+
+
 	while True:
 		
 		# Check if trigger occured
 		if (pvTriggered == True):
+
+			iter_start = time.perf_counter()
 			
 			# reset the trigger event to catch the next on
 			pvTriggered = False
@@ -169,16 +172,25 @@ def main():
 				val = epics.ca.get_complete(data[0])
 				pvdatadict[name] = val
 
-			print(time.strftime("[%Y/%m/%d %H:%M:%S]") + ' .... Saving collected data | ' + str(trgCounter))
-			f=h5py.File(FILENAME,'a')
+			getpv_end = time.perf_counter()
+
+			
+			#f=h5py.File(FILENAME,'a')
 			my_grp=f.create_group(str(trgCounter))
 
 			for name, data in pvdata.items():
 				my_grp.create_dataset(name, data=pvdatadict[name])
-				print(name + ' = ' + str(pvdatadict[name]))
+				#print(name + ' = ' + str(pvdatadict[name]))
 
+			my_grp.create_dataset('TIMESTAMP', data=acq_trigger.timestamp)
+
+			now = time.perf_counter()
+			getpv_time = getpv_end - iter_start
+			writepv_time = now - getpv_end
+
+			print(time.strftime("[%Y/%m/%d %H:%M:%S]") + ' .... Saving collected data | ' + '{:0.4f} | {:0.4f}'.format(getpv_time, writepv_time))
 			trgCounter = trgCounter + 1
-			f.close()
+			#f.close()
 
 		
 		time.sleep(0.25)
