@@ -19,7 +19,7 @@ addr = os.getcwd() + '/'
 if (_DEBUG == True):
 	addr = os.getcwd() + '/'
 	#addr = '/media/sf_vboxshared/'
-else:
+#else:
 	#addr = path/to/ext/drive
 
 # Timestamping configs
@@ -44,9 +44,9 @@ pvTriggerName = prefix + 'AMC1:Profile-RB'
 
 # PV Callback function - just modify pvTriggered variable when it changes
 def onChanges(pvname=None, value=None, char_value=None, **kw):
-    global pvTriggered
-    pvTriggered = True
-    
+	global pvTriggered
+	pvTriggered = True
+	
 # Main function
 def main():
 	global pvTriggered
@@ -94,20 +94,22 @@ def main():
 		ess_pv_list.append(prefix + amc_name + 'ActualSamplesR')
 		ess_pv_list.append(prefix + amc_name + 'TickValueR')
 		for ai_n in ain_list:
-			ess_pv_list.append(prefix + amc_name + ai_n + 'RangeR'
+			ess_pv_list.append(prefix + amc_name + ai_n + 'RangeR')
 
-
-	# Connect to ALL PVS and check if they respond
+	max_str = 0
+	for pv in ess_pv_list:
+		if (len(pv) > max_str):
+			max_str = len(pv)
 
 	for pv in ess_pv_list:
-		pvobj = epics.PV(pv, verbose=True, connection_timeout = 1.0)
-		if (pv.status == 1):
-			print('PV ' + pv + ' OK!')
-		else:
-			print('PV ' + pv + ' NOT CONNECTED!')
-
-
+		time.sleep(0.1)
+		pvobj = epics.PV(pv, verbose=False, connection_timeout = 5.0)
+		msg_str = 'Trying to connect to ' + pv
+		for i in range(0, (max_str-len(pv)+4)):
+			msg_str += '.'
+		result_str = str(pvobj.wait_for_connection(timeout=5.0))
+		print(msg_str + result_str)
 
 
 if __name__ == '__main__':
-    main()
+	main()
