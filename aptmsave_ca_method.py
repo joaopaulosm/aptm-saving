@@ -9,18 +9,15 @@ import signal
 # Runtime definition
 # _DEBUG == ESS or JPARC
 #####################################################
-_DEBUG = True
-_USE_JPARC = False
+_DEBUG = False
+_USE_JPARC = True
 
 # Destination folder
-addr = os.getcwd() + '/'
-#addr = '/media/sf_vboxshared/'
-
 if (_DEBUG == True):
 	addr = os.getcwd() + '/'
 	#addr = '/media/sf_vboxshared/'
 else:
-	#addr = path/to/ext/drive
+	addr = '/mnt/external/aptm_datacollection'
 
 # Timestamping configs
 TIMESTAMP = time.strftime("%H:%M:%S")
@@ -40,7 +37,19 @@ else:
 	prefix = 'APTM1:'
 
 pvTriggered = False
-pvTriggerName = prefix + 'AMC1:Profile-RB'
+pvTriggerName = 'APTM1-EVR1:EvtACnt-I'
+
+# Creating HDF5 file
+f=h5py.File(FILENAME,'w')
+f.attrs['file_name']        = FILENAME
+f.attrs['file_time']        = TIMESTAMP
+f.attrs['HDF5_Version']     = h5py.version.hdf5_version
+
+def signal_handler(sig, frame):
+        global f
+        print('Closing the HDF5 file ...')
+        f.close()
+        sys.exit(0)
 
 # PV Callback function - just modify pvTriggered variable when it changes
 def onChanges(pvname=None, value=None, char_value=None, **kw):
@@ -50,7 +59,10 @@ def onChanges(pvname=None, value=None, char_value=None, **kw):
 # Main function
 def main():
 	global pvTriggered
+	global f
 	pvTriggered = False
+
+	signal.signal(signal.SIGINT, signal_handler)
 
 	# Trigger counter
 	trgCounter = 0
@@ -123,50 +135,50 @@ def main():
 	ess_pv_list.append('bt3n:DSO6014L2:VPPC_V2:VAL')
 	ess_pv_list.append('bt3n:DSO6014L3:VPPC_V2:VAL')
 
-	# HDF5 file creation
-	f=h5py.File(FILENAME,'w')
-	f.attrs['file_name']        = FILENAME
-	f.attrs['file_time']        = TIMESTAMP
-	f.attrs['HDF5_Version']     = h5py.version.hdf5_version
-
 	# Channel access connections
 	# based on http://cars9.uchicago.edu/software/python/pyepics3/advanced.html
 
-	pvdata = {}
+	# Create objects
+	pvdata = {} # dictionary to hold chid 
+	pvdatadict = {} # dictionary to hold collected data
+
 	for name in ess_pv_list:
 		chid = epics.ca.create_channel(name, connect=False, auto_cb=False) # note 1
 		pvdata[name] = (chid, None)
 
+	# Connect to PVs
+	for name, data in pvdata.items():
+		epics.ca.connect_channel(data[0])
+	epics.ca.poll()
+
 	while True:
 		
+		# Check if trigger occured
 		if (pvTriggered == True):
 			
 			# reset the trigger event to catch the next on
 			pvTriggered = False
 
 			# Get PV values
-			print('Reading PV values!')
-			amc1_fitAmp = get_amc1_fitAmp.get(timeout=10)
-			amc1_fitMu = get_amc1_fitMu.get(timeout=10)
-			amc1_fitSigma = get_amc1_fitSigma.get(timeout=10)
-			amc2_fitAmp = get_amc2_fitAmp.get(timeout=10)
-			amc2_fitMu = get_amc2_fitMu.get(timeout=10)
-			amc2_fitSigma = get_amc2fitSigma.get(timeout=10)
+			for name, data in pvdata.items():
+				epics.ca.get(data[0], wait=False)  # note 2
 
-			print('Writing to HDF5!')
+			epics.ca.poll()
+			
+			for name, data in pvdata.items():
+				val = epics.ca.get_complete(data[0])
+				pvdatadict[name] = val
 
+			print(time.strftime("[%Y/%m/%d %H:%M:%S]") + ' .... Saving collected data | ' + str(trgCounter))
+			f=h5py.File(FILENAME,'a')
 			my_grp=f.create_group(str(trgCounter))
 
-			my_grp.create_dataset('dataset_amc1_fitAmp', data=amc1_fitAmp)
-			my_grp.create_dataset('dataset_amc1_fitMu', data=amc1_fitMu)
-			my_grp.create_dataset('dataset_amc1_fitSigma', data=amc1_fitSigma)
-			my_grp.create_dataset('dataset_amc2_fitAmp', data=amc2_fitAmp)
-			my_grp.create_dataset('dataset_amc2_fitMu', data=amc2_fitMu)
-			my_grp.create_dataset('dataset_amc2_fitSigma', data=amc2_fitSigma)
+			for name, data in pvdata.items():
+				my_grp.create_dataset(name, data=pvdatadict[name])
+				print(name + ' = ' + str(pvdatadict[name]))
 
 			trgCounter = trgCounter + 1
-
-
+			f.close()
 
 		
 		time.sleep(0.25)

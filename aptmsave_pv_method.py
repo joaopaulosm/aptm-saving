@@ -129,29 +129,13 @@ def main():
 	f.attrs['file_time']        = TIMESTAMP
 	f.attrs['HDF5_Version']     = h5py.version.hdf5_version
 
-	# Channel access connections
-	# based on http://cars9.uchicago.edu/software/python/pyepics3/advanced.html
-
-	pvdata = {}
-	for name in ess_pv_list:
-		chid = epics.ca.create_channel(name, connect=False, auto_cb=False) # note 1
-		pvdata[name] = (chid, None)
-
 	while True:
 		
+		# Check if trigger occured
 		if (pvTriggered == True):
 			
 			# reset the trigger event to catch the next on
 			pvTriggered = False
-
-			# Get PV values
-			print('Reading PV values!')
-			amc1_fitAmp = get_amc1_fitAmp.get(timeout=10)
-			amc1_fitMu = get_amc1_fitMu.get(timeout=10)
-			amc1_fitSigma = get_amc1_fitSigma.get(timeout=10)
-			amc2_fitAmp = get_amc2_fitAmp.get(timeout=10)
-			amc2_fitMu = get_amc2_fitMu.get(timeout=10)
-			amc2_fitSigma = get_amc2fitSigma.get(timeout=10)
 
 			print('Writing to HDF5!')
 
