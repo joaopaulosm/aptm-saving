@@ -96,11 +96,38 @@ def main():
 		for ai_n in ain_list:
 			ess_pv_list.append(prefix + amc_name + ai_n + 'RangeR')
 
+	# J-PARC PVs
+	ess_pv_list.append('BT_SW:SCTD:VAL_ATT')
+	ess_pv_list.append('BT_SW:PMEXT01H:VAL')
+	ess_pv_list.append('BT_SW:PMEXT01V:VAL')
+	ess_pv_list.append('BT_SW:PMEXT02H:VAL')
+	ess_pv_list.append('BT_SW:PMEXT02V:VAL')
+	ess_pv_list.append('BT_SW:PMFIX0DH:VAL')
+	ess_pv_list.append('BT_SW:PMFIX0DV:VAL')
+	ess_pv_list.append('bt3n:DSO6014L0:VPPC_H1:VAL')
+	ess_pv_list.append('bt3n:DSO6014L1:VPPC_H1:VAL')
+	ess_pv_list.append('bt3n:DSO6014L2:VPPC_H1:VAL')
+	ess_pv_list.append('bt3n:DSO6014L3:VPPC_H1:VAL')
+	ess_pv_list.append('bt3n:DSO6014L0:VPPC_H2:VAL')
+	ess_pv_list.append('bt3n:DSO6014L1:VPPC_H2:VAL')
+	ess_pv_list.append('bt3n:DSO6014L2:VPPC_H2:VAL')
+	ess_pv_list.append('bt3n:DSO6014L3:VPPC_H2:VAL')
+	ess_pv_list.append('bt3n:DSO6014L0:VPPC_V1:VAL')
+	ess_pv_list.append('bt3n:DSO6014L1:VPPC_V1:VAL')
+	ess_pv_list.append('bt3n:DSO6014L2:VPPC_V1:VAL')
+	ess_pv_list.append('bt3n:DSO6014L3:VPPC_V1:VAL')
+	ess_pv_list.append('bt3n:DSO6014L0:VPPC_V2:VAL')
+	ess_pv_list.append('bt3n:DSO6014L1:VPPC_V2:VAL')
+	ess_pv_list.append('bt3n:DSO6014L2:VPPC_V2:VAL')
+	ess_pv_list.append('bt3n:DSO6014L3:VPPC_V2:VAL')
+
+
 	max_str = 0
 	for pv in ess_pv_list:
 		if (len(pv) > max_str):
 			max_str = len(pv)
 
+	# Run through all PVs and try to connect ###################################### 
 	for pv in ess_pv_list:
 		time.sleep(0.1)
 		pvobj = epics.PV(pv, verbose=False, connection_timeout = 5.0)
@@ -113,3 +140,6 @@ def main():
 
 if __name__ == '__main__':
 	main()
+
+
+
