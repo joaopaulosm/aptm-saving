@@ -104,9 +104,24 @@ def main():
 		for ai_n in ain_list:
 			ess_pv_list.append(prefix + amc_name + ai_n + 'RangeR')
 
-	# Motor Positions
+	# Motion PVs
+	ess_pv_list.append('jparc:001-Err')
+	ess_pv_list.append('jparc:001-ErrId')
+	ess_pv_list.append('jparc:002-Err')
+	ess_pv_list.append('jparc:002-ErrId')
+	ess_pv_list.append('jparc:MCU-ErrMsg')
+	ess_pv_list.append('jparc:ec0-s3-EL3314-AI1') 
+	ess_pv_list.append('jparc:ec0-s3-EL3314-AI2') 
+	ess_pv_list.append('jparc:MCU-ErrId')
+	ess_pv_list.append('jparc:001.VAL')	
+	ess_pv_list.append('jparc:001.RBV')  	
+	ess_pv_list.append('jparc:002.VAL')	
+	ess_pv_list.append('jparc:002.RBV')   
 
 	# J-PARC PVs creation
+        # PV for the grid upstream window
+	ess_pv_list.append('BT_SW:PMFIX0DH:VAL')
+	ess_pv_list.append('BT_SW:PMFIX0DV:VAL')
 	ess_pv_list.append('BT_SW:SCTD:VAL_ATT')
 	ess_pv_list.append('BT_SW:PMEXT01H:VAL')
 	ess_pv_list.append('BT_SW:PMEXT01V:VAL')
